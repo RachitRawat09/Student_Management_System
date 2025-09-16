@@ -1,26 +1,19 @@
 import React from "react";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+import StudentNavbar from "../components/StudentNavbar";
 import DashboardContent from "../components/Dashboard";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 const StudentDashboard = () => {
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-
-        {/* Page Content */}
-        <div className="flex-1 overflow-y-auto bg-gray-100">
-          <Routes>
-            <Route path="/" element={<Navigate to="profile" />} />
-            <Route path=":section" element={<DashboardContent />} />
-          </Routes>
-        </div>
+    <div className="min-h-screen bg-gray-100">
+      <StudentNavbar />
+      
+      {/* Page Content */}
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<Navigate to="dashboard" />} />
+          <Route path=":section" element={<DashboardContent />} />
+        </Routes>
       </div>
     </div>
   );

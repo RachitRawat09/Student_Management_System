@@ -13,7 +13,7 @@ const Login = () => {
     } else if (credentials.role === "staff") {
       navigate("/staff");
     } else {
-      navigate("/student/profile");
+      navigate("/student/dashboard");
     }
   };
 
