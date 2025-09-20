@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from "react";
+import { admissionAPI } from "../services/api";
 
 const AdmissionForm = () => {
   const [step, setStep] = useState(1);
   const totalSteps = 7;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
 
   const [formData, setFormData] = useState({
     // 1) Personal Details
@@ -124,17 +127,165 @@ const AdmissionForm = () => {
     setStep((s) => Math.max(1, s - 1));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep()) {
       alert("Please complete the required fields before submitting.");
       return;
     }
-    console.log("Admission Form Submitted:", formData);
-    alert("Admission form submitted successfully! (Pending backend wiring)");
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      // Prepare form data for backend
+      const formDataToSend = new FormData();
+
+      // Add personal information
+      formDataToSend.append('firstName', formData.fullName.split(' ')[0] || '');
+      formDataToSend.append('lastName', formData.fullName.split(' ').slice(1).join(' ') || '');
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.contactNumber);
+      formDataToSend.append('dateOfBirth', formData.dob);
+      formDataToSend.append('gender', formData.gender);
+      formDataToSend.append('nationality', formData.nationality);
+
+      // Add address information
+      const addressData = {
+        street: formData.permanentAddress || formData.currentAddress || "Address not provided",
+        city: "City", // Default city
+        state: "State", // Default state
+        zipCode: "00000", // Default zip code
+        country: formData.nationality || "Country not specified"
+      };
+      formDataToSend.append('address', JSON.stringify(addressData));
+
+      // Add academic information
+      const academicData = {
+        course: formData.chosenCourse || "Course not specified",
+        semester: formData.academicSession || "Semester not specified",
+        previousEducation: {
+          institution: formData.prevInstitute || "Previous Institution",
+          qualification: formData.lastQualification || "Qualification not specified",
+          yearOfPassing: parseInt(formData.passingYear) || new Date().getFullYear(),
+          percentage: parseFloat(formData.lastPercentage) || 0
+        }
+      };
+      formDataToSend.append('academicInfo', JSON.stringify(academicData));
+
+      // Add emergency contact
+      const emergencyData = {
+        name: formData.fatherName || formData.motherName || "Emergency Contact",
+        relationship: "Parent",
+        phone: formData.fatherContact || formData.motherContact || formData.contactNumber,
+        email: formData.email || ""
+      };
+      formDataToSend.append('emergencyContact', JSON.stringify(emergencyData));
+
+      // Add files
+      if (formData.photo) {
+        formDataToSend.append('profilePhoto', formData.photo);
+      }
+      if (formData.idProof) {
+        formDataToSend.append('idProof', formData.idProof);
+      }
+      
+      // Add academic certificates as individual files
+      if (formData.marksheet10) {
+        formDataToSend.append('academicCertificates', formData.marksheet10);
+      }
+      if (formData.marksheet12) {
+        formDataToSend.append('academicCertificates', formData.marksheet12);
+      }
+      if (formData.graduationMarksheet) {
+        formDataToSend.append('academicCertificates', formData.graduationMarksheet);
+      }
+      
+      // Add other documents
+      if (formData.tcMigration) {
+        formDataToSend.append('otherDocuments', formData.tcMigration);
+      }
+      if (formData.casteCertificate) {
+        formDataToSend.append('otherDocuments', formData.casteCertificate);
+      }
+      if (formData.incomeCertificate) {
+        formDataToSend.append('otherDocuments', formData.incomeCertificate);
+      }
+
+      // Debug: Log form data being sent
+      console.log('Form data being sent:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
+
+      // Submit to backend
+      const response = await admissionAPI.submitAdmission(formDataToSend);
+      
+      if (response.success) {
+        setSubmitStatus({
+          type: 'success',
+          message: 'Admission form submitted successfully!',
+          data: response.data
+        });
+        console.log('Admission submitted successfully:', response.data);
+      } else {
+        throw new Error(response.message || 'Failed to submit admission form');
+      }
+
+    } catch (error) {
+      console.error('Error submitting admission:', error);
+      
+      // Show detailed error information
+      let errorMessage = 'Failed to submit admission form. Please try again.';
+      
+      if (error.response?.data) {
+        console.log('Backend error response:', error.response.data);
+        
+        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+          // Show validation errors
+          errorMessage = 'Validation errors:\n' + error.response.data.errors.map(err => `• ${err.msg || err.message}`).join('\n');
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitStatus({
+        type: 'error',
+        message: errorMessage
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
+    <div className="w-full">
+      {/* Status Messages */}
+      {submitStatus && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          submitStatus.type === 'success' 
+            ? 'bg-green-100 border border-green-400 text-green-700' 
+            : 'bg-red-100 border border-red-400 text-red-700'
+        }`}>
+          <div className="flex items-center">
+            <span className="text-lg mr-2">
+              {submitStatus.type === 'success' ? '✅' : '❌'}
+            </span>
+            <div>
+              <p className="font-semibold">{submitStatus.message}</p>
+              {submitStatus.data && (
+                <p className="text-sm mt-1">
+                  Application ID: {submitStatus.data.studentId} | 
+                  Status: {submitStatus.data.admissionStatus}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     <form onSubmit={handleSubmit} className="w-full">
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
@@ -314,12 +465,31 @@ const AdmissionForm = () => {
             Next
           </button>
         ) : (
-          <button type="submit" className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
-            Submit Application
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded text-white ${
+              isSubmitting 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              'Submit Application'
+            )}
           </button>
         )}
       </div>
     </form>
+    </div>
   );
 };
 
