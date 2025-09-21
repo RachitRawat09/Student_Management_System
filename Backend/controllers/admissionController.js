@@ -25,7 +25,6 @@ const submitAdmission = async (req, res) => {
     // Extract data from request body
     const {
       firstName,
-      lastName,
       email,
       phone,
       dateOfBirth,
@@ -38,7 +37,6 @@ const submitAdmission = async (req, res) => {
     
     console.log('Extracted data:', {
       firstName,
-      lastName,
       email,
       phone,
       dateOfBirth,
@@ -91,7 +89,7 @@ const submitAdmission = async (req, res) => {
     // Create new student
     const student = new Student({
       firstName,
-      lastName,
+      
       email,
       phone,
       dateOfBirth,
@@ -257,7 +255,7 @@ const updateAdmissionStatus = async (req, res) => {
 const checkAdmissionStatus = async (req, res) => {
   try {
     const student = await Student.findOne({ email: req.params.email })
-      .select('firstName lastName email admissionStatus studentId submittedAt reviewedAt approvedAt');
+      .select('firstName email admissionStatus studentId submittedAt reviewedAt approvedAt');
     
     if (!student) {
       return res.status(404).json({
