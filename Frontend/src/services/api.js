@@ -100,6 +100,16 @@ export const admissionAPI = {
     }
   },
 
+  // Approve application and create student + send email (if backend supports)
+  approveApplication: async (id, { password }) => {
+    try {
+      const response = await api.post(`/admission/applications/${id}/approve`, { password });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Delete application (admin)
   deleteApplication: async (id) => {
     try {
@@ -122,6 +132,8 @@ export const healthCheck = async () => {
 };
 
 export default api;
+
+
 
 
 

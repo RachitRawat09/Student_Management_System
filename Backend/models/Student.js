@@ -159,6 +159,11 @@ const studentSchema = new mongoose.Schema({
     sparse: true
   },
 
+  // Authentication
+  passwordHash: {
+    type: String,
+  },
+
   // Timestamps
   submittedAt: {
     type: Date,

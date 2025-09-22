@@ -1,5 +1,7 @@
 const Student = require('../models/Student');
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const { sendAdmissionApprovalEmail } = require('../services/emailService');
 
 // @desc    Submit admission form
 // @route   POST /api/admission/submit
@@ -318,4 +320,57 @@ module.exports = {
   updateAdmissionStatus,
   checkAdmissionStatus,
   deleteApplication
+};
+
+// Approve application: generate password, hash, store, send email
+// @route   POST /api/admission/applications/:id/approve
+// @access  Private (Admin)
+module.exports.approveAndNotify = async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Generate password if not provided
+    const base = (student.firstName || 'student').replace(/\s+/g, '').toLowerCase();
+    const first = base.slice(0, 5).padEnd(5, 'x');
+    const specials = '@#';
+    const nums = String(Math.floor(100 + Math.random() * 900));
+    const generatedPassword = password || `${first}${specials}${nums}`;
+
+    // Hash and store
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(generatedPassword, salt);
+    student.passwordHash = hash;
+    student.admissionStatus = 'Approved';
+    student.reviewedAt = new Date();
+    student.approvedAt = new Date();
+    await student.save();
+
+    try {
+      await sendAdmissionApprovalEmail({
+        toEmail: student.email,
+        firstName: student.firstName,
+        password: generatedPassword,
+        portalUrl: process.env.PORTAL_URL || 'http://localhost:5173',
+      });
+    } catch (mailErr) {
+      console.error('Email error:', mailErr);
+      // continue; we already saved credentials
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Approved and email sent',
+      data: {
+        studentId: student._id,
+        admissionStatus: student.admissionStatus,
+      },
+    });
+  } catch (error) {
+    console.error('approveAndNotify error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
 };

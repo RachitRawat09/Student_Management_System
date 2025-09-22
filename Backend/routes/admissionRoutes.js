@@ -6,7 +6,8 @@ const {
   getApplicationById,
   updateAdmissionStatus,
   checkAdmissionStatus,
-  deleteApplication
+  deleteApplication,
+  approveAndNotify
 } = require('../controllers/admissionController');
 const { uploadFields } = require('../middlewares/upload');
 
@@ -144,6 +145,11 @@ router.put('/applications/:id/status',
   ],
   updateAdmissionStatus
 );
+
+// @route   POST /api/admission/applications/:id/approve
+// @desc    Approve application, create credentials, send email
+// @access  Private (Admin)
+router.post('/applications/:id/approve', approveAndNotify);
 
 // @route   GET /api/admission/status/:email
 // @desc    Check admission status by email
