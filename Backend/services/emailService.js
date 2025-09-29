@@ -41,6 +41,27 @@ async function sendAdmissionApprovalEmail({ toEmail, firstName, password, portal
 
 module.exports = {
   sendAdmissionApprovalEmail,
+  async sendHostelAllocationEmail({ toEmail, firstName, roomNumber, roomType }) {
+    const transporter = createTransport();
+    const mailOptions = {
+      from: `Hostel Office <${process.env.EMAIL_USER || 'no-reply@example.com'}>`,
+      to: toEmail,
+      subject: 'Hostel Allocation Confirmed',
+      html: `
+        <div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
+          <p>Dear ${firstName || 'Student'},</p>
+          <p>Your hostel room has been allocated successfully.</p>
+          <ul>
+            <li><b>Room Type</b>: ${roomType}</li>
+            <li><b>Room Number</b>: ${roomNumber}</li>
+          </ul>
+          <p>Please report to the hostel office with your ID for check-in.</p>
+          <p>Regards,<br/>Hostel Administration</p>
+        </div>
+      `,
+    };
+    return transporter.sendMail(mailOptions);
+  }
 };
 
 

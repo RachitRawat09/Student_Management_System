@@ -164,6 +164,39 @@ const studentSchema = new mongoose.Schema({
     type: String,
   },
 
+  // Hostel Information
+  hostel: {
+    applied: {
+      type: Boolean,
+      default: false
+    },
+    application: {
+      preferences: {
+        roomType: { type: String, enum: ['Single', 'Double', 'Triple'], default: 'Double' },
+        blockPreference: { type: String, default: '' }
+      },
+      appliedAt: { type: Date }
+    },
+    allocation: {
+      roomNumber: { type: String, default: '' },
+      block: { type: String, default: '' },
+      floor: { type: String, default: '' },
+      roomType: { type: String, default: '' },
+      monthlyRent: { type: String, default: '' },
+      status: { type: String, enum: ['Active', 'Inactive', 'Pending'], default: 'Pending' },
+      checkInDate: { type: Date },
+      expectedCheckOut: { type: Date },
+    },
+    payments: [
+      {
+        month: String,
+        amount: String,
+        status: { type: String, enum: ['Paid', 'Pending'], default: 'Pending' },
+        date: String
+      }
+    ]
+  },
+
   // Timestamps
   submittedAt: {
     type: Date,
