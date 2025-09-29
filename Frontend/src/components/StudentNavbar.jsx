@@ -15,7 +15,11 @@ const StudentNavbar = () => {
   ];
 
   const handleLogout = () => {
-    // TODO: Clear auth token/session
+    // Clear minimal persisted auth
+    try {
+      localStorage.removeItem('authRole');
+      localStorage.removeItem('authEmail');
+    } catch {}
     navigate("/login");
   };
 

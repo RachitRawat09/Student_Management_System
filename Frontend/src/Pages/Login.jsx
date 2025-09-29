@@ -8,6 +8,11 @@ const Login = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     // Placeholder auth; replace with API call. Route by role.
+    // Persist minimal identity for now (email/userId + role)
+    try {
+      localStorage.setItem('authRole', credentials.role);
+      localStorage.setItem('authEmail', credentials.userId);
+    } catch {}
     if (credentials.role === "admin") {
       navigate("/admin");
     } else if (credentials.role === "staff") {

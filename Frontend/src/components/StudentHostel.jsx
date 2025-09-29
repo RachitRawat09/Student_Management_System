@@ -1,18 +1,63 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { studentAPI } from "../services/api";
 
 const StudentHostel = () => {
-  // Dummy data for hostel details
-  const hostelInfo = {
-    roomNumber: "A-205",
-    block: "Block A",
-    floor: "2nd Floor",
-    roomType: "Double Sharing",
-    monthlyRent: "₹8,000",
-    status: "Active",
-    checkInDate: "August 15, 2022",
-    expectedCheckOut: "May 30, 2026",
-    roommate: "Alex Johnson"
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [hostel, setHostel] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [preferences, setPreferences] = useState({ roomType: 'Double', blockPreference: '' });
+
+  const authEmail = useMemo(() => {
+    try { return localStorage.getItem('authEmail') || ''; } catch { return ''; }
+  }, []);
+
+  const loadHostel = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (!authEmail) throw new Error('Not logged in');
+      const res = await studentAPI.getHostel(authEmail);
+      setHostel(res.data || {});
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to load hostel details');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadHostel();
+  }, [authEmail]);
+
+  const onApply = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      await studentAPI.applyHostel({ email: authEmail, preferences });
+      await loadHostel();
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to apply');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const hostelInfo = useMemo(() => {
+    const alloc = hostel?.allocation || {};
+    return {
+      roomNumber: alloc.roomNumber || '—',
+      block: alloc.block || '—',
+      floor: alloc.floor || '—',
+      roomType: alloc.roomType || '—',
+      monthlyRent: alloc.monthlyRent || '—',
+      status: alloc.status || (hostel?.applied ? 'Pending' : 'Not Applied'),
+      checkInDate: alloc.checkInDate ? new Date(alloc.checkInDate).toDateString() : '—',
+      expectedCheckOut: alloc.expectedCheckOut ? new Date(alloc.expectedCheckOut).toDateString() : '—',
+      roommate: '—'
+    };
+  }, [hostel]);
 
   const amenities = [
     { name: "WiFi", available: true, icon: "📶" },
@@ -25,13 +70,9 @@ const StudentHostel = () => {
     { name: "Security", available: true, icon: "🔒" }
   ];
 
-  const monthlyPayments = [
-    { month: "January 2024", amount: "₹8,000", status: "Paid", date: "Jan 1, 2024" },
-    { month: "December 2023", amount: "₹8,000", status: "Paid", date: "Dec 1, 2023" },
-    { month: "November 2023", amount: "₹8,000", status: "Paid", date: "Nov 1, 2023" },
-    { month: "October 2023", amount: "₹8,000", status: "Paid", date: "Oct 1, 2023" },
-    { month: "September 2023", amount: "₹8,000", status: "Paid", date: "Sep 1, 2023" }
-  ];
+  const monthlyPayments = useMemo(() => {
+    return hostel?.payments && hostel.payments.length ? hostel.payments : [];
+  }, [hostel]);
 
   const maintenanceRequests = [
     {
@@ -68,8 +109,12 @@ const StudentHostel = () => {
     "Respect other residents and maintain peace"
   ];
 
+  if (loading) {
+    return <div className="p-6">Loading hostel details...</div>;
+  }
   return (
     <div className="p-6 space-y-6">
+      {error ? <div className="text-red-600">{error}</div> : null}
       {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">🏠 Hostel Details</h1>
@@ -77,6 +122,32 @@ const StudentHostel = () => {
           Room {hostelInfo.roomNumber} • {hostelInfo.block} • {hostelInfo.floor}
         </p>
       </div>
+
+      {/* Apply for Hostel (if not applied) */}
+      {!hostel?.applied && (
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Apply for Hostel</h2>
+          <form onSubmit={onApply} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Room Type</label>
+              <select value={preferences.roomType} onChange={(e)=>setPreferences(p=>({...p, roomType: e.target.value}))} className="w-full p-2 border rounded">
+                <option value="Single">Single</option>
+                <option value="Double">Double</option>
+                <option value="Triple">Triple</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Block Preference (optional)</label>
+              <input value={preferences.blockPreference} onChange={(e)=>setPreferences(p=>({...p, blockPreference: e.target.value}))} className="w-full p-2 border rounded" placeholder="e.g., Block A" />
+            </div>
+            <div className="md:col-span-3">
+              <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                {submitting ? 'Submitting...' : 'Apply for Hostel'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Hostel Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -191,7 +262,11 @@ const StudentHostel = () => {
               </tr>
             </thead>
             <tbody>
-              {monthlyPayments.map((payment, index) => (
+              {monthlyPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-gray-500">No payments yet</td>
+                </tr>
+              ) : monthlyPayments.map((payment, index) => (
                 <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{payment.month}</td>
                   <td className="py-3 px-4 font-semibold">{payment.amount}</td>
@@ -211,7 +286,7 @@ const StudentHostel = () => {
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-700">Next Payment Due:</span>
-            <span className="text-lg font-bold text-red-600">March 1, 2024</span>
+            <span className="text-lg font-bold text-red-600">—</span>
           </div>
         </div>
       </div>

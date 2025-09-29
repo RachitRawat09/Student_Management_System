@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import StudentTable from "../components/StudentTable";
 import AdmissionForm from "../components/AdmissionForm";
-import HostelForm from "../components/HostelForm";
+import StaffHostel from "../components/StaffHostel";
 import FeeForm from "../components/FeeForm";
 import StudentAcademics from "../components/StudentAcademics";
 import Notifications from "../components/Notifications";
@@ -79,7 +79,7 @@ const StaffDashboard = () => {
               <div className="p-4">
                 {activeTab === "students" && <StudentTable />}
                 {activeTab === "admission" && <StaffAdmissions />}
-                {activeTab === "hostel" && <HostelForm />}
+                {activeTab === "hostel" && <StaffHostel />}
                 {activeTab === "fees" && <FeeForm />}
                 {activeTab === "academics" && <StudentAcademics />}
                 {activeTab === "notifications" && <Notifications />}

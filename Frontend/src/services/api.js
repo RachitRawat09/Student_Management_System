@@ -121,6 +121,38 @@ export const admissionAPI = {
   },
 };
 
+// Student endpoints
+export const studentAPI = {
+  getByEmail: async (email) => {
+    const response = await api.get(`/students/by-email/${encodeURIComponent(email)}`);
+    return response.data;
+  },
+  getHostel: async (email) => {
+    const response = await api.get(`/students/hostel/${encodeURIComponent(email)}`);
+    return response.data;
+  },
+  applyHostel: async ({ email, preferences }) => {
+    const response = await api.post('/students/hostel/apply', { email, preferences });
+    return response.data;
+  }
+};
+
+// Hostel (staff) endpoints
+export const hostelAPI = {
+  getStats: async () => {
+    const res = await api.get('/hostel/stats');
+    return res.data;
+  },
+  listApplications: async () => {
+    const res = await api.get('/hostel/applications');
+    return res.data;
+  },
+  allocate: async ({ email, roomType, roomNumber }) => {
+    const res = await api.post('/hostel/allocate', { email, roomType, roomNumber });
+    return res.data;
+  },
+};
+
 // Health check
 export const healthCheck = async () => {
   try {

@@ -1,79 +1,115 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { studentAPI } from "../services/api";
 
 const StudentProfile = () => {
-  // Dummy data for student profile (read-only admission details)
-  const personalInfo = {
-    fullName: "John Doe",
-    studentId: "STU2024001",
-    email: "john.doe@student.edu",
-    phone: "+91 98765 43210",
-    dateOfBirth: "March 15, 2002",
-    gender: "Male",
-    nationality: "Indian",
-    bloodGroup: "O+",
-    category: "General",
-    profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [student, setStudent] = useState(null);
 
-  const addressInfo = {
-    permanentAddress: "123 Main Street, Sector 15, New Delhi, Delhi - 110001",
-    currentAddress: "Room A-205, Block A, University Hostel, Campus Area, New Delhi - 110016"
-  };
+  const authEmail = useMemo(() => {
+    try { return localStorage.getItem('authEmail') || ''; } catch { return ''; }
+  }, []);
 
-  const parentInfo = {
-    fatherName: "Robert Doe",
-    fatherOccupation: "Software Engineer",
-    fatherContact: "+91 98765 43211",
-    motherName: "Sarah Doe",
-    motherOccupation: "Teacher",
-    motherContact: "+91 98765 43212",
-    annualIncome: "₹8,00,000"
-  };
-
-  const academicInfo = {
-    course: "Computer Science Engineering",
-    specialization: "Software Engineering",
-    semester: "3rd Semester",
-    batch: "2022-2026",
-    admissionDate: "August 15, 2022",
-    rollNumber: "CSE2022001",
-    enrollmentNumber: "ENR2022001"
-  };
-
-  const educationalBackground = [
-    {
-      qualification: "10th Standard",
-      school: "Delhi Public School",
-      board: "CBSE",
-      passingYear: "2018",
-      percentage: "92%"
-    },
-    {
-      qualification: "12th Standard",
-      school: "Delhi Public School",
-      board: "CBSE",
-      passingYear: "2020",
-      percentage: "88%"
-    },
-    {
-      qualification: "JEE Main",
-      exam: "Joint Entrance Examination",
-      year: "2022",
-      rank: "15,000",
-      score: "285/300"
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        if (!authEmail) throw new Error('Not logged in');
+        const res = await studentAPI.getByEmail(authEmail);
+        if (isMounted) setStudent(res.data);
+      } catch (e) {
+        if (isMounted) setError(e?.response?.data?.message || e.message || 'Failed to load profile');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
-  ];
+    load();
+    return () => { isMounted = false; };
+  }, [authEmail]);
 
-  const documents = [
-    { name: "Profile Photo", status: "Uploaded", icon: "📷" },
-    { name: "Signature", status: "Uploaded", icon: "✍️" },
-    { name: "Aadhaar Card", status: "Uploaded", icon: "🆔" },
-    { name: "10th Marksheet", status: "Uploaded", icon: "📄" },
-    { name: "12th Marksheet", status: "Uploaded", icon: "📄" },
-    { name: "JEE Score Card", status: "Uploaded", icon: "📊" },
-    { name: "Transfer Certificate", status: "Uploaded", icon: "📋" },
-    { name: "Migration Certificate", status: "Uploaded", icon: "📋" }
-  ];
+  const personalInfo = useMemo(() => {
+    const fullName = student?.firstName || 'Student';
+    return {
+      fullName,
+      studentId: student?.studentId || '—',
+      email: student?.email || authEmail,
+      phone: student?.phone || '—',
+      dateOfBirth: student?.dateOfBirth ? new Date(student.dateOfBirth).toDateString() : '—',
+      gender: student?.gender || '—',
+      nationality: student?.nationality || '—',
+      bloodGroup: '—',
+      category: '—',
+      profileImage: student?.documents?.profilePhoto || 'https://via.placeholder.com/80'
+    };
+  }, [student, authEmail]);
+
+  const addressInfo = useMemo(() => {
+    const a = student?.address || {};
+    const permanent = [a.street, a.city, a.state, a.zipCode, a.country].filter(Boolean).join(', ');
+    return {
+      permanentAddress: permanent || '—',
+      currentAddress: permanent || '—'
+    };
+  }, [student]);
+
+  const parentInfo = useMemo(() => {
+    const e = student?.emergencyContact || {};
+    return {
+      fatherName: e.name || '—',
+      fatherOccupation: e.relationship || '—',
+      fatherContact: e.phone || '—',
+      motherName: '—',
+      motherOccupation: '—',
+      motherContact: '—',
+      annualIncome: '—'
+    };
+  }, [student]);
+
+  const academicInfo = useMemo(() => {
+    const ai = student?.academicInfo || {};
+    return {
+      course: ai.course || '—',
+      specialization: ai.specialization || '—',
+      semester: ai.semester || '—',
+      batch: '—',
+      admissionDate: student?.approvedAt ? new Date(student.approvedAt).toDateString() : '—',
+      rollNumber: '—',
+      enrollmentNumber: '—'
+    };
+  }, [student]);
+
+  const educationalBackground = useMemo(() => {
+    const prev = student?.academicInfo?.previousEducation;
+    if (!prev) return [];
+    return [
+      {
+        qualification: prev.qualification,
+        school: prev.institution,
+        board: '',
+        passingYear: String(prev.yearOfPassing || ''),
+        percentage: prev.percentage != null ? `${prev.percentage}%` : '—'
+      }
+    ];
+  }, [student]);
+
+  const documents = useMemo(() => {
+    const d = student?.documents || {};
+    return [
+      { name: "Profile Photo", status: d.profilePhoto ? "Uploaded" : "Missing", icon: "📷" },
+      { name: "ID Proof", status: d.idProof ? "Uploaded" : "Missing", icon: "🆔" },
+      { name: "Address Proof", status: d.addressProof ? "Uploaded" : "Missing", icon: "📄" },
+      { name: "Academic Certificates", status: (d.academicCertificates||[]).length?"Uploaded":"Missing", icon: "📚" }
+    ];
+  }, [student]);
+
+  if (loading) {
+    return <div className="p-6">Loading profile...</div>;
+  }
+  if (error) {
+    return <div className="p-6 text-red-600">{error}</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
