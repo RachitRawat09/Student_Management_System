@@ -78,11 +78,11 @@ const Home = () => {
       
       {/* Hero Section */}
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-purple-900/80 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 z-10"></div>
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')"
+            backgroundImage: "url('https://image-static.collegedunia.com/public/college_data/images/campusimage/15045223521443079015UOR_New.jpg')"
           }}
         ></div>
         

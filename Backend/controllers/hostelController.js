@@ -6,9 +6,11 @@ const { sendHostelAllocationEmail } = require('../services/emailService');
 module.exports.getHostelStats = async (req, res) => {
   try {
     const totals = { Single: 100, Double: 100, Triple: 100 };
+    // Count unique rooms (not individual students)
     const allocations = await Student.aggregate([
       { $match: { 'hostel.allocation.roomType': { $in: ['Single','Double','Triple'] }, 'hostel.allocation.status': 'Active' } },
-      { $group: { _id: '$hostel.allocation.roomType', count: { $sum: 1 } } }
+      { $group: { _id: { roomType: '$hostel.allocation.roomType', roomNumber: '$hostel.allocation.roomNumber' } } },
+      { $group: { _id: '$_id.roomType', count: { $sum: 1 } } }
     ]);
     const filled = allocations.reduce((acc, cur) => { acc[cur._id] = cur.count; return acc; }, {});
     const stats = ['Single','Double','Triple'].map(type => ({
@@ -70,6 +72,5 @@ module.exports.allocateRoom = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
   }
 };
-
 
 

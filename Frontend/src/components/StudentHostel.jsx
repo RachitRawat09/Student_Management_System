@@ -55,7 +55,7 @@ const StudentHostel = () => {
       status: alloc.status || (hostel?.applied ? 'Pending' : 'Not Applied'),
       checkInDate: alloc.checkInDate ? new Date(alloc.checkInDate).toDateString() : '—',
       expectedCheckOut: alloc.expectedCheckOut ? new Date(alloc.expectedCheckOut).toDateString() : '—',
-      roommate: '—'
+      roommates: hostel?.roommates || []
     };
   }, [hostel]);
 
@@ -183,23 +183,64 @@ const StudentHostel = () => {
               <span className="text-2xl">👥</span>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Roommate</h3>
-              <p className="text-sm text-gray-600">Sharing Details</p>
+              <h3 className="font-semibold text-gray-900">Roommates</h3>
+              <p className="text-sm text-gray-600">
+                {hostelInfo.roommates && hostelInfo.roommates.length > 0 
+                  ? `${hostelInfo.roommates.length} roommate(s) in your room` 
+                  : 'Sharing Details'
+                }
+              </p>
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Name:</span>
-              <span className="font-semibold">{hostelInfo.roommate}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Course:</span>
-              <span className="font-semibold">CSE</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Year:</span>
-              <span className="font-semibold">3rd Year</span>
-            </div>
+          <div className="space-y-4">
+            {hostelInfo.roommates && hostelInfo.roommates.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {hostelInfo.roommates.map((roommate, index) => (
+                  <div key={index} className="bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {roommate.firstName?.charAt(0) || '?'}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 text-lg">{roommate.firstName || 'Unknown'}</h4>
+                        <p className="text-sm text-gray-600 mb-2">{roommate.academicInfo?.course || 'Course not specified'}</p>
+                        <div className="space-y-1">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span className="mr-2">📧</span>
+                            <span className="truncate">{roommate.email}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span className="mr-2">🏠</span>
+                            <span>Room {hostelInfo.roomNumber}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex space-x-2">
+                          <button className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors">
+                            Message
+                          </button>
+                          <button className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full hover:bg-green-200 transition-colors">
+                            Contact
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🏠</div>
+                <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                  {hostelInfo.roomType === 'Single' ? 'Single Room' : 'No Roommates Yet'}
+                </h4>
+                <p className="text-gray-600">
+                  {hostelInfo.roomType === 'Single' 
+                    ? 'You have a single room - no roommates to share with.' 
+                    : 'No roommates have been assigned to your room yet.'
+                  }
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -218,10 +259,10 @@ const StudentHostel = () => {
               <span className="text-gray-600">Check-in:</span>
               <span className="font-semibold">{hostelInfo.checkInDate}</span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span className="text-gray-600">Expected Check-out:</span>
               <span className="font-semibold">{hostelInfo.expectedCheckOut}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between">
               <span className="text-gray-600">Duration:</span>
               <span className="font-semibold">4 Years</span>
@@ -229,6 +270,60 @@ const StudentHostel = () => {
           </div>
         </div>
       </div>
+
+      {/* Roommates Section - More Prominent Display */}
+      {hostelInfo.roommates && hostelInfo.roommates.length > 0 && (
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">👥 Your Roommates</h2>
+              <p className="text-green-100">Meet the students sharing your room</p>
+            </div>
+            <div className="text-right">
+              <div className="bg-white/20 rounded-lg p-3">
+                <p className="text-sm text-green-100">Room Capacity</p>
+                <p className="text-xl font-bold">
+                  {hostelInfo.roommates.length + 1} / {hostelInfo.roomType === 'Single' ? '1' : hostelInfo.roomType === 'Double' ? '2' : '3'}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {hostelInfo.roommates.map((roommate, index) => (
+              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {roommate.firstName?.charAt(0) || '?'}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-lg">{roommate.firstName || 'Unknown'}</h4>
+                    <p className="text-green-100 text-sm">{roommate.academicInfo?.course || 'Course not specified'}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm text-green-100">
+                    <span className="mr-2">📧</span>
+                    <span className="truncate">{roommate.email}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-green-100">
+                    <span className="mr-2">🏠</span>
+                    <span>Room {hostelInfo.roomNumber}</span>
+                  </div>
+                </div>
+                <div className="mt-4 flex space-x-2">
+                  <button className="flex-1 bg-white/20 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
+                    💬 Message
+                  </button>
+                  <button className="flex-1 bg-white/20 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
+                    📞 Call
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Amenities */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -292,7 +387,7 @@ const StudentHostel = () => {
       </div>
 
       {/* Maintenance Requests */}
-      <div className="bg-white rounded-xl p-6 shadow-lg">
+      {/* <div className="bg-white rounded-xl p-6 shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900">🔧 Maintenance Requests</h2>
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -322,7 +417,7 @@ const StudentHostel = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Hostel Rules */}
       <div className="bg-white rounded-xl p-6 shadow-lg">

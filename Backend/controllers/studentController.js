@@ -22,7 +22,22 @@ module.exports.getHostelInfo = async (req, res) => {
     if (!student) {
       return res.status(404).json({ success: false, message: 'Student not found' });
     }
-    return res.status(200).json({ success: true, data: student.hostel || {} });
+    
+    let hostelData = student.hostel || {};
+    
+    // If student has allocation, find roommates
+    if (hostelData.allocation && hostelData.allocation.status === 'Active' && hostelData.allocation.roomNumber) {
+      const roommates = await Student.find({
+        'hostel.allocation.roomNumber': hostelData.allocation.roomNumber,
+        'hostel.allocation.roomType': hostelData.allocation.roomType,
+        'hostel.allocation.status': 'Active',
+        email: { $ne: email } // Exclude current student
+      }).select('firstName email academicInfo.course');
+      
+      hostelData.roommates = roommates;
+    }
+    
+    return res.status(200).json({ success: true, data: hostelData });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
   }

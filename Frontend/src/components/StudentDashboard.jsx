@@ -1,18 +1,89 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { studentAPI } from "../services/api";
 
 const StudentDashboard = () => {
-  // Dummy data for demonstration
-  const studentData = {
-    name: "John Doe",
+  const [studentData, setStudentData] = useState(null);
+  const [hostelData, setHostelData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // Get student email from localStorage (same as other components)
+  const getStudentEmail = () => {
+    try {
+      const authEmail = localStorage.getItem('authEmail');
+      if (authEmail) return authEmail;
+      
+      // If no auth email found, redirect to login
+      console.warn('No student email found in localStorage');
+      return null;
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      return null;
+    }
+  };
+  
+  const studentEmail = getStudentEmail();
+
+  useEffect(() => {
+    // If no student email found, redirect to login
+    if (!studentEmail) {
+      console.warn('No student email found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching data for student:', studentEmail);
+        
+        const [studentResponse, hostelResponse] = await Promise.all([
+          studentAPI.getByEmail(studentEmail),
+          studentAPI.getHostel(studentEmail)
+        ]);
+        
+        console.log('Student response:', studentResponse);
+        console.log('Hostel response:', hostelResponse);
+        
+        if (studentResponse.success) {
+          setStudentData(studentResponse.data);
+        } else {
+          console.warn('Student data fetch failed:', studentResponse.message);
+          // Don't set error for student data failure, just use defaults
+        }
+        
+        if (hostelResponse.success) {
+          setHostelData(hostelResponse.data);
+        } else {
+          console.warn('Hostel data fetch failed:', hostelResponse.message);
+          // Don't set error for hostel data failure, just use defaults
+        }
+      } catch (err) {
+        console.error('Error fetching student data:', err);
+        const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+        setError(`Failed to load student data: ${errorMessage}. Please check if the backend server is running.`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, [studentEmail]);
+
+  // Default data structure for fallback
+  const defaultStudentData = {
+    firstName: "Student",
     studentId: "STU2024001",
-    course: "Computer Science Engineering",
-    semester: "3rd Semester",
-    batch: "2022-2026",
+    academicInfo: {
+      course: "Computer Science Engineering",
+      semester: "3rd Semester"
+    },
     cgpa: "8.5",
     attendance: "92%"
   };
 
-  const academicInfo = {
+  const defaultAcademicInfo = {
     currentSemester: "3rd Semester",
     totalCredits: "120",
     completedCredits: "90",
@@ -22,18 +93,7 @@ const StudentDashboard = () => {
     examDate: "March 15, 2024"
   };
 
-  const hostelDetails = {
-    roomNumber: "A-205",
-    block: "Block A",
-    floor: "2nd Floor",
-    roomType: "Double Sharing",
-    monthlyRent: "₹8,000",
-    status: "Active",
-    checkInDate: "August 15, 2022",
-    amenities: ["WiFi", "Laundry", "Common Room", "Mess"]
-  };
-
-  const feesStatus = {
+  const defaultFeesStatus = {
     totalFees: "₹1,50,000",
     paidFees: "₹1,20,000",
     pendingFees: "₹30,000",
@@ -42,6 +102,80 @@ const StudentDashboard = () => {
     lastPayment: "₹30,000 on Jan 15, 2024"
   };
 
+  // Show loading if no student email (redirecting to login)
+  if (!studentEmail) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <p className="text-red-600 text-lg mb-2">{error}</p>
+          <p className="text-gray-600 text-sm mb-4">Student Email: {studentEmail || 'Not found'}</p>
+          <div className="space-x-4">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+            <button 
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                // Retry fetching data
+                const fetchStudentData = async () => {
+                  try {
+                    const [studentResponse, hostelResponse] = await Promise.all([
+                      studentAPI.getByEmail(studentEmail),
+                      studentAPI.getHostel(studentEmail)
+                    ]);
+                    
+                    if (studentResponse.success) setStudentData(studentResponse.data);
+                    if (hostelResponse.success) setHostelData(hostelResponse.data);
+                  } catch (err) {
+                    setError(`Failed to load student data: ${err.message}`);
+                  } finally {
+                    setLoading(false);
+                  }
+                };
+                fetchStudentData();
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use actual data or fallback to defaults
+  const currentStudentData = studentData || defaultStudentData;
+  const currentAcademicInfo = defaultAcademicInfo; // You can make this dynamic too
+  const currentFeesStatus = defaultFeesStatus; // You can make this dynamic too
+
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
@@ -49,19 +183,19 @@ const StudentDashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {studentData.name}! 👋
+              Welcome back, {currentStudentData.firstName}! 👋
             </h1>
             <p className="text-blue-100 text-lg">
-              {studentData.course} • {studentData.semester} • {studentData.batch}
+              {currentStudentData.academicInfo?.course || 'Course'} • {currentStudentData.academicInfo?.semester || 'Semester'}
             </p>
             <p className="text-blue-200 text-sm mt-1">
-              Student ID: {studentData.studentId}
+              Student ID: {currentStudentData.studentId || 'N/A'}
             </p>
           </div>
           <div className="text-right">
             <div className="bg-white/20 rounded-lg p-4">
               <p className="text-sm text-blue-100">Current CGPA</p>
-              <p className="text-2xl font-bold">{studentData.cgpa}</p>
+              <p className="text-2xl font-bold">{currentStudentData.cgpa || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -76,7 +210,7 @@ const StudentDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">CGPA</p>
-              <p className="text-2xl font-bold text-gray-900">{academicInfo.cgpa}</p>
+              <p className="text-2xl font-bold text-gray-900">{currentAcademicInfo.cgpa}</p>
             </div>
           </div>
         </div>
@@ -88,7 +222,7 @@ const StudentDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Attendance</p>
-              <p className="text-2xl font-bold text-gray-900">{academicInfo.attendance}</p>
+              <p className="text-2xl font-bold text-gray-900">{currentAcademicInfo.attendance}</p>
             </div>
           </div>
         </div>
@@ -100,7 +234,9 @@ const StudentDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Hostel</p>
-              <p className="text-2xl font-bold text-gray-900">{hostelDetails.roomNumber}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {hostelData?.allocation?.roomNumber || 'Not Allocated'}
+              </p>
             </div>
           </div>
         </div>
@@ -112,7 +248,7 @@ const StudentDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Fees Status</p>
-              <p className="text-2xl font-bold text-gray-900">{feesStatus.status}</p>
+              <p className="text-2xl font-bold text-gray-900">{currentFeesStatus.status}</p>
             </div>
           </div>
         </div>
@@ -135,23 +271,23 @@ const StudentDashboard = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600">Current Semester</span>
-              <span className="font-semibold">{academicInfo.currentSemester}</span>
+              <span className="font-semibold">{currentAcademicInfo.currentSemester}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600">Total Credits</span>
-              <span className="font-semibold">{academicInfo.totalCredits}</span>
+              <span className="font-semibold">{currentAcademicInfo.totalCredits}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600">Completed Credits</span>
-              <span className="font-semibold">{academicInfo.completedCredits}</span>
+              <span className="font-semibold">{currentAcademicInfo.completedCredits}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600">Next Exam</span>
-              <span className="font-semibold">{academicInfo.nextExam}</span>
+              <span className="font-semibold">{currentAcademicInfo.nextExam}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-600">Exam Date</span>
-              <span className="font-semibold text-red-600">{academicInfo.examDate}</span>
+              <span className="font-semibold text-red-600">{currentAcademicInfo.examDate}</span>
             </div>
           </div>
         </div>
@@ -168,28 +304,84 @@ const StudentDashboard = () => {
             </button>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Room Number</span>
-              <span className="font-semibold">{hostelDetails.roomNumber}</span>
+          {hostelData?.allocation?.status === 'Active' ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Room Number</span>
+                <span className="font-semibold">{hostelData.allocation.roomNumber}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Block & Floor</span>
+                <span className="font-semibold">{hostelData.allocation.block}, {hostelData.allocation.floor}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Room Type</span>
+                <span className="font-semibold">{hostelData.allocation.roomType}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Monthly Rent</span>
+                <span className="font-semibold">{hostelData.allocation.monthlyRent}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Status</span>
+                <span className="font-semibold text-green-600">{hostelData.allocation.status}</span>
+              </div>
+              
+              {/* Roommates Section */}
+              {hostelData.roommates && hostelData.roommates.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-600 font-medium">Roommates ({hostelData.roommates.length})</span>
+                    <span className="text-xs text-blue-600">👥</span>
+                  </div>
+                  <div className="space-y-2">
+                    {hostelData.roommates.map((roommate, index) => (
+                      <div key={index} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {roommate.firstName?.charAt(0) || '?'}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 text-sm">{roommate.firstName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-600">{roommate.academicInfo?.course || 'Course not specified'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Block & Floor</span>
-              <span className="font-semibold">{hostelDetails.block}, {hostelDetails.floor}</span>
+          ) : hostelData?.applied ? (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">⏳</div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Hostel Application Pending</h3>
+              <p className="text-gray-600 mb-4">Your hostel application is under review. You will be notified once allocation is complete.</p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Applied on:</strong> {new Date(hostelData.application?.appliedAt).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-yellow-800">
+                  <strong>Room Preference:</strong> {hostelData.application?.preferences?.roomType}
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Room Type</span>
-              <span className="font-semibold">{hostelDetails.roomType}</span>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">🏠</div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Hostel Request</h3>
+              <p className="text-gray-600 mb-4">You haven't applied for hostel accommodation yet.</p>
+              <button 
+                onClick={() => {
+                  // Navigate to hostel application page
+                  window.location.href = '/student/hostel';
+                }}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Make Hostel Request
+              </button>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Monthly Rent</span>
-              <span className="font-semibold">{hostelDetails.monthlyRent}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Status</span>
-              <span className="font-semibold text-green-600">{hostelDetails.status}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Fees Status */}
@@ -207,15 +399,15 @@ const StudentDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Total Fees</p>
-              <p className="text-2xl font-bold text-gray-900">{feesStatus.totalFees}</p>
+              <p className="text-2xl font-bold text-gray-900">{currentFeesStatus.totalFees}</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Paid Amount</p>
-              <p className="text-2xl font-bold text-green-600">{feesStatus.paidFees}</p>
+              <p className="text-2xl font-bold text-green-600">{currentFeesStatus.paidFees}</p>
             </div>
             <div className="text-center p-4 bg-red-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Pending Amount</p>
-              <p className="text-2xl font-bold text-red-600">{feesStatus.pendingFees}</p>
+              <p className="text-2xl font-bold text-red-600">{currentFeesStatus.pendingFees}</p>
             </div>
           </div>
           
@@ -223,53 +415,67 @@ const StudentDashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-600">Next Due Date</p>
-                <p className="font-semibold text-red-600">{feesStatus.nextDueDate}</p>
+                <p className="font-semibold text-red-600">{currentFeesStatus.nextDueDate}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Last Payment</p>
-                <p className="font-semibold text-green-600">{feesStatus.lastPayment}</p>
+                <p className="font-semibold text-green-600">{currentFeesStatus.lastPayment}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Activities */}
-      <div className="bg-white rounded-xl p-6 shadow-lg">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-          <span className="mr-2">📋</span>
-          Recent Activities
-        </h2>
-        
-        <div className="space-y-3">
-          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Fee payment received</p>
-              <p className="text-xs text-gray-600">₹30,000 paid on January 15, 2024</p>
-            </div>
-            <span className="text-xs text-gray-500">2 days ago</span>
+      {/* Debug Panel - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Debug Information</h3>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
+            >
+              {showDebug ? 'Hide' : 'Show'} Debug
+            </button>
           </div>
           
-          <div className="flex items-center p-3 bg-green-50 rounded-lg">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Assignment submitted</p>
-              <p className="text-xs text-gray-600">Data Structures Assignment - 95%</p>
+          {showDebug && (
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-700 mb-2">Student Email:</h4>
+                <p className="text-sm text-gray-600 font-mono">{studentEmail || 'Not found'}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Source: localStorage.getItem('authEmail')
+                </p>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-700 mb-2">Student Data:</h4>
+                <pre className="text-xs text-gray-600 overflow-auto max-h-32">
+                  {JSON.stringify(studentData, null, 2)}
+                </pre>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-700 mb-2">Hostel Data:</h4>
+                <pre className="text-xs text-gray-600 overflow-auto max-h-32">
+                  {JSON.stringify(hostelData, null, 2)}
+                </pre>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-700 mb-2">Loading State:</h4>
+                <p className="text-sm text-gray-600">{loading ? 'Loading...' : 'Loaded'}</p>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-700 mb-2">Error State:</h4>
+                <p className="text-sm text-gray-600">{error || 'No errors'}</p>
+              </div>
             </div>
-            <span className="text-xs text-gray-500">1 week ago</span>
-          </div>
-          
-          <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Hostel maintenance</p>
-              <p className="text-xs text-gray-600">Room A-205 maintenance completed</p>
-            </div>
-            <span className="text-xs text-gray-500">2 weeks ago</span>
-          </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -63,9 +63,7 @@ const StudentNavbar = () => {
 
           {/* User Info & Logout */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">Welcome, John Doe</span>
-            </div>
+            
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"
@@ -123,9 +121,7 @@ const StudentNavbar = () => {
           ))}
           
           <div className="border-t border-gray-200 pt-2 mt-2">
-            <div className="px-3 py-2 text-sm text-gray-600">
-              Welcome, John Doe
-            </div>
+            
             <button
               onClick={handleLogout}
               className="block px-3 py-2 rounded-md text-base font-medium w-full text-left bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
