@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  timeout: 30000, // 30 seconds timeout for file uploads
+  baseURL: import.meta.env.VITE_BASE_URL, // ✅ backend Render URL use karo
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
