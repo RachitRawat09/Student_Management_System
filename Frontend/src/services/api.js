@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base configuration
 // NEW (production backend)
 const api = axios.create({
-  baseURL: 'https://student-management-system-195x.onrender.com/api',
+  baseURL: 'https://student-management-system-hz2g.onrender.com',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
