@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 // Create axios instance with base configuration
+// NEW (production backend)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL, // ✅ backend Render URL use karo
+  baseURL: 'https://student-management-system-195x.onrender.com/api',
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
+
 
 // Request interceptor
 api.interceptors.request.use(
