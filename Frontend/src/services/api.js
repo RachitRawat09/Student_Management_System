@@ -49,7 +49,7 @@ export const admissionAPI = {
   // Submit admission form with file uploads
   submitAdmission: async (formData) => {
     try {
-      const response = await api.post('/admission/submit', formData, {
+      const response = await api.post('/api/admission/submit', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -63,7 +63,7 @@ export const admissionAPI = {
   // Check admission status by email
   checkStatus: async (email) => {
     try {
-      const response = await api.get(`/admission/status/${email}`);
+      const response = await api.get(`/api/admission/status/${email}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -73,7 +73,7 @@ export const admissionAPI = {
   // Get all applications (admin)
   getAllApplications: async (params = {}) => {
     try {
-      const response = await api.get('/admission/applications', { params });
+      const response = await api.get('/api/admission/applications', { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -83,7 +83,7 @@ export const admissionAPI = {
   // Get single application (admin)
   getApplicationById: async (id) => {
     try {
-      const response = await api.get(`/admission/applications/${id}`);
+      const response = await api.get(`/api/admission/applications/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -93,7 +93,7 @@ export const admissionAPI = {
   // Update admission status (admin)
   updateStatus: async (id, status) => {
     try {
-      const response = await api.put(`/admission/applications/${id}/status`, { status });
+      const response = await api.put(`/api/admission/applications/${id}/status`, { status });
       return response.data;
     } catch (error) {
       throw error;
@@ -103,7 +103,7 @@ export const admissionAPI = {
   // Approve application and create student + send email (if backend supports)
   approveApplication: async (id, { password }) => {
     try {
-      const response = await api.post(`/admission/applications/${id}/approve`, { password });
+      const response = await api.post(`/api/admission/applications/${id}/approve`, { password });
       return response.data;
     } catch (error) {
       throw error;
@@ -113,7 +113,7 @@ export const admissionAPI = {
   // Delete application (admin)
   deleteApplication: async (id) => {
     try {
-      const response = await api.delete(`/admission/applications/${id}`);
+      const response = await api.delete(`/api/admission/applications/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -124,15 +124,15 @@ export const admissionAPI = {
 // Student endpoints
 export const studentAPI = {
   getByEmail: async (email) => {
-    const response = await api.get(`/students/by-email/${encodeURIComponent(email)}`);
+    const response = await api.get(`/api/students/by-email/${encodeURIComponent(email)}`);
     return response.data;
   },
   getHostel: async (email) => {
-    const response = await api.get(`/students/hostel/${encodeURIComponent(email)}`);
+    const response = await api.get(`/api/students/hostel/${encodeURIComponent(email)}`);
     return response.data;
   },
   applyHostel: async ({ email, preferences }) => {
-    const response = await api.post('/students/hostel/apply', { email, preferences });
+    const response = await api.post('/api/students/hostel/apply', { email, preferences });
     return response.data;
   }
 };
@@ -140,15 +140,15 @@ export const studentAPI = {
 // Hostel (staff) endpoints
 export const hostelAPI = {
   getStats: async () => {
-    const res = await api.get('/hostel/stats');
+    const res = await api.get('/api/hostel/stats');
     return res.data;
   },
   listApplications: async () => {
-    const res = await api.get('/hostel/applications');
+    const res = await api.get('/api/hostel/applications');
     return res.data;
   },
   allocate: async ({ email, roomType, roomNumber }) => {
-    const res = await api.post('/hostel/allocate', { email, roomType, roomNumber });
+    const res = await api.post('/api/hostel/allocate', { email, roomType, roomNumber });
     return res.data;
   },
 };
@@ -156,7 +156,7 @@ export const hostelAPI = {
 // Health check
 export const healthCheck = async () => {
   try {
-    const response = await api.get('/health');
+    const response = await api.get('/api/health');
     return response.data;
   } catch (error) {
     throw error;
