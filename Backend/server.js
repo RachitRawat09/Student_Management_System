@@ -24,6 +24,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/admission', require('./routes/admissionRoutes'));
 app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/hostel', require('./routes/hostelRoutes'));
+app.use('/api/fees', require('./routes/feeRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

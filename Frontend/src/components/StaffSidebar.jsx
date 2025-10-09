@@ -7,9 +7,7 @@ const items = [
   { key: "hostel", label: "Hostel", icon: "🏨" },
   { key: "fees", label: "Fees", icon: "💳" },
   { key: "academics", label: "Academics", icon: "📚" },
-  { key: "notifications", label: "Notifications", icon: "🔔" },
-  { key: "reports", label: "Reports", icon: "📈" },
-  { key: "settings", label: "Settings", icon: "⚙️" },
+  
 ];
 
 export default function StaffSidebar({ activeKey, onSelect }) {

@@ -198,6 +198,36 @@ const getApplicationById = async (req, res) => {
   }
 };
 
+// @desc    Get application for screening with documents
+// @route   GET /api/admission/applications/:id/screening
+// @access  Private (Staff)
+const getApplicationForScreening = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    // Return complete application data including documents
+    res.status(200).json({
+      success: true,
+      data: student
+    });
+
+  } catch (error) {
+    console.error('Get application for screening error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Update admission status
 // @route   PUT /api/admission/applications/:id/status
 // @access  Private (Admin)
@@ -218,6 +248,14 @@ const updateAdmissionStatus = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Application not found'
+      });
+    }
+
+    // Prevent changing approved status
+    if (student.admissionStatus === 'Approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change status of approved applications'
       });
     }
 
@@ -317,6 +355,7 @@ module.exports = {
   submitAdmission,
   getAllApplications,
   getApplicationById,
+  getApplicationForScreening,
   updateAdmissionStatus,
   checkAdmissionStatus,
   deleteApplication

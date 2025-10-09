@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import StudentTable from "../components/StudentTable";
 import AdmissionForm from "../components/AdmissionForm";
 import StaffHostel from "../components/StaffHostel";
-import FeeForm from "../components/FeeForm";
+import StaffFeeManagement from "../components/StaffFeeManagement";
 import StudentAcademics from "../components/StudentAcademics";
 import Notifications from "../components/Notifications";
 import StaffSidebar from "../components/StaffSidebar";
@@ -80,7 +80,7 @@ const StaffDashboard = () => {
                 {activeTab === "students" && <StudentTable />}
                 {activeTab === "admission" && <StaffAdmissions />}
                 {activeTab === "hostel" && <StaffHostel />}
-                {activeTab === "fees" && <FeeForm />}
+                {activeTab === "fees" && <StaffFeeManagement />}
                 {activeTab === "academics" && <StudentAcademics />}
                 {activeTab === "notifications" && <Notifications />}
               </div>

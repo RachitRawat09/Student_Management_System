@@ -4,6 +4,7 @@ const {
   submitAdmission,
   getAllApplications,
   getApplicationById,
+  getApplicationForScreening,
   updateAdmissionStatus,
   checkAdmissionStatus,
   deleteApplication,
@@ -133,6 +134,11 @@ router.get('/applications', getAllApplications);
 // @desc    Get single admission application by ID
 // @access  Private (Admin)
 router.get('/applications/:id', getApplicationById);
+
+// @route   GET /api/admission/applications/:id/screening
+// @desc    Get application for screening with documents
+// @access  Private (Staff)
+router.get('/applications/:id/screening', getApplicationForScreening);
 
 // @route   PUT /api/admission/applications/:id/status
 // @desc    Update admission status

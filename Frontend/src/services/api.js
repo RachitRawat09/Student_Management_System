@@ -3,7 +3,8 @@ import axios from 'axios';
 // Create axios instance with base configuration
 // NEW (production backend)
 const api = axios.create({
-  baseURL: 'https://student-management-system-hz2g.onrender.com',
+  baseURL: 'http://localhost:5000',
+  // 
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -90,6 +91,16 @@ export const admissionAPI = {
     }
   },
 
+  // Get application for screening with documents
+  getApplicationForScreening: async (id) => {
+    try {
+      const response = await api.get(`/api/admission/applications/${id}/screening`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Update admission status (admin)
   updateStatus: async (id, status) => {
     try {
@@ -123,6 +134,22 @@ export const admissionAPI = {
 
 // Student endpoints
 export const studentAPI = {
+  getAll: async (params = {}) => {
+    const response = await api.get('/api/students/all', { params });
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await api.get(`/api/students/${id}`);
+    return response.data;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/api/students/${id}`, data);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/api/students/${id}`);
+    return response.data;
+  },
   getByEmail: async (email) => {
     const response = await api.get(`/api/students/by-email/${encodeURIComponent(email)}`);
     return response.data;
@@ -151,6 +178,37 @@ export const hostelAPI = {
     const res = await api.post('/api/hostel/allocate', { email, roomType, roomNumber });
     return res.data;
   },
+};
+
+// Fee endpoints
+export const feeAPI = {
+  // Staff endpoints
+  createFeeNotice: async (feeData) => {
+    const response = await api.post('/api/fees/create', feeData);
+    return response.data;
+  },
+  getAllFeeNotices: async (params = {}) => {
+    const response = await api.get('/api/fees/list', { params });
+    return response.data;
+  },
+  getFeeStatistics: async (params = {}) => {
+    const response = await api.get('/api/fees/stats', { params });
+    return response.data;
+  },
+  updateFeeStatus: async (id, status) => {
+    const response = await api.put(`/api/fees/${id}/status`, { status });
+    return response.data;
+  },
+  
+  // Student endpoints
+  getStudentFees: async (email) => {
+    const response = await api.get(`/api/fees/student/${encodeURIComponent(email)}`);
+    return response.data;
+  },
+  recordPayment: async (paymentData) => {
+    const response = await api.post('/api/fees/pay', paymentData);
+    return response.data;
+  }
 };
 
 // Health check
