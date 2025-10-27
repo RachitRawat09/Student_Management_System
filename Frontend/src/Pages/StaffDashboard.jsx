@@ -10,13 +10,6 @@ import StaffAdmissions from "../components/StaffAdmissions";
 import { dashboardAPI } from "../services/api";
 
 const TABS = [
-
-  { key: "students", label: "Students" },
-  { key: "admission", label: "Admission" },
-  { key: "hostel", label: "Hostel" },
-  { key: "fees", label: "Fees" },
-  { key: "academics", label: "Academics" }
-
   { key: "students", label: "Students", icon: "👥" },
   { key: "admission", label: "Admission", icon: "📝" },
   { key: "hostel", label: "Hostel", icon: "🏠" },
@@ -235,4 +228,3 @@ const StaffDashboard = () => {
 };
 
 export default StaffDashboard;
-
