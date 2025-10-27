@@ -3,7 +3,8 @@ import axios from 'axios';
 // Create axios instance with base configuration
 // NEW (production backend)
 const api = axios.create({
-  baseURL: 'https://student-management-system-hz2g.onrender.com/',
+  // baseURL: 'https://student-management-system-hz2g.onrender.com/',
+  baseURL: 'http://localhost:5000/',
   // 
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
@@ -207,6 +208,14 @@ export const feeAPI = {
   },
   recordPayment: async (paymentData) => {
     const response = await api.post('/api/fees/pay', paymentData);
+    return response.data;
+  }
+};
+
+// Dashboard endpoints
+export const dashboardAPI = {
+  getStats: async () => {
+    const response = await api.get('/api/dashboard/stats');
     return response.data;
   }
 };

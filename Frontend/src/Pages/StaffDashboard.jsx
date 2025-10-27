@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import StudentTable from "../components/StudentTable";
 import AdmissionForm from "../components/AdmissionForm";
@@ -8,6 +8,7 @@ import StudentAcademics from "../components/StudentAcademics";
 import Notifications from "../components/Notifications";
 import StaffSidebar from "../components/StaffSidebar";
 import StaffAdmissions from "../components/StaffAdmissions";
+import { dashboardAPI } from "../services/api";
 
 const TABS = [
   { key: "students", label: "Students" },
@@ -20,6 +21,36 @@ const TABS = [
 
 const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState("students");
+  const [dashboardStats, setDashboardStats] = useState({
+    totalStudents: 0,
+    pendingAdmissions: 0,
+    hostelOccupancy: "0%",
+    feesCollected: "₹0L"
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardAPI.getStats();
+        if (response.success) {
+          setDashboardStats(response.data);
+        } else {
+          setError('Failed to fetch dashboard statistics');
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError('Error loading dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
 
   return (
     <div className="flex h-screen">
@@ -31,19 +62,43 @@ const StaffDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-lg p-4 shadow">
                 <div className="text-xs text-gray-500">Total Students</div>
-                <div className="text-2xl font-bold">1,248</div>
+                {loading ? (
+                  <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                ) : error ? (
+                  <div className="text-2xl font-bold text-red-500">Error</div>
+                ) : (
+                  <div className="text-2xl font-bold">{dashboardStats.totalStudents.toLocaleString()}</div>
+                )}
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
                 <div className="text-xs text-gray-500">Pending Admissions</div>
-                <div className="text-2xl font-bold text-orange-600">24</div>
+                {loading ? (
+                  <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                ) : error ? (
+                  <div className="text-2xl font-bold text-red-500">Error</div>
+                ) : (
+                  <div className="text-2xl font-bold text-orange-600">{dashboardStats.pendingAdmissions}</div>
+                )}
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
                 <div className="text-xs text-gray-500">Hostel Occupancy</div>
-                <div className="text-2xl font-bold">86%</div>
+                {loading ? (
+                  <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                ) : error ? (
+                  <div className="text-2xl font-bold text-red-500">Error</div>
+                ) : (
+                  <div className="text-2xl font-bold">{dashboardStats.hostelOccupancy}</div>
+                )}
               </div>
               <div className="bg-white rounded-lg p-4 shadow">
                 <div className="text-xs text-gray-500">Fees Collected (MoM)</div>
-                <div className="text-2xl font-bold text-green-600">₹18.2L</div>
+                {loading ? (
+                  <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                ) : error ? (
+                  <div className="text-2xl font-bold text-red-500">Error</div>
+                ) : (
+                  <div className="text-2xl font-bold text-green-600">{dashboardStats.feesCollected}</div>
+                )}
               </div>
             </div>
 
