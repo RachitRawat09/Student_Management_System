@@ -14,8 +14,7 @@ const TABS = [
   { key: "admission", label: "Admission" },
   { key: "hostel", label: "Hostel" },
   { key: "fees", label: "Fees" },
-  { key: "academics", label: "Academics" },
-  { key: "notifications", label: "Notifications" },
+  { key: "academics", label: "Academics" }
 ];
 
 const StaffDashboard = () => {
