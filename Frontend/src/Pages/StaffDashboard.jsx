@@ -10,19 +10,18 @@ import StaffAdmissions from "../components/StaffAdmissions";
 import { dashboardAPI } from "../services/api";
 
 const TABS = [
-<<<<<<< HEAD
+
   { key: "students", label: "Students" },
   { key: "admission", label: "Admission" },
   { key: "hostel", label: "Hostel" },
   { key: "fees", label: "Fees" },
   { key: "academics", label: "Academics" }
-=======
+
   { key: "students", label: "Students", icon: "👥" },
   { key: "admission", label: "Admission", icon: "📝" },
   { key: "hostel", label: "Hostel", icon: "🏠" },
   { key: "fees", label: "Fees", icon: "💰" },
   { key: "academics", label: "Academics", icon: "📚" },
->>>>>>> c0ffcbf412160658007dd742d36ae281445bac5d
 ];
 
 const StaffDashboard = () => {
